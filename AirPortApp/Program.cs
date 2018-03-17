@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using System.IO;
+using System.Threading;
 
 namespace AirPortApp
 {
@@ -51,6 +52,7 @@ namespace AirPortApp
 
       static void SecondMenu()
       {
+         Console.Clear();
          Console.WriteLine("============ Программа касса Аэропорта ============");
          Console.WriteLine("== Обзор и изменение направления авиаперелетов. ==");
 
@@ -85,11 +87,28 @@ namespace AirPortApp
                Console.WriteLine(">> Нажмите ENTER TO CONTINUE");
                Console.ReadLine();
                Console.Clear();
-               ThirdMenu();
+               SecondMenu();
                break;
             case "2":
                // изменение цены перелета
-               break;
+               Console.Clear();
+               AirDirection ad3 = new AirDirection();
+               ad3 = ad3.FindToChangeDPC(); // заполняю пустой объект данными из базы данных
+               // если объект пустой то нельзя изменить запись возврат в меню
+               Thread.Sleep(2000);
+               if (ad3.Direction == null)
+               {
+                  SecondMenu();
+                  break;
+               }
+               else
+               {
+                  ad3.ChangePriceDirection();
+                  Thread.Sleep(2000);
+                  SecondMenu();
+                  break;
+               }
+               
             case "3":
                FirstMenu();
                break;

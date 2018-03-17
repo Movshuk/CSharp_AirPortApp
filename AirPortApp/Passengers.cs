@@ -18,7 +18,7 @@ namespace AirPortApp
       internal string Age { get; set; }
       internal string Gender { get; set; }
 
-
+      // вывод всех пассажиров
       internal void ShowAllPassengers()
       {
          string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LocalDBAirPortApp.mdf;Integrated Security=True";
@@ -66,6 +66,7 @@ namespace AirPortApp
 
       }
 
+      // проверяет пассажир новый или уже ранее покупал билеты
       internal bool SelectPass(string fn, string ln, string idn)
       {
          bool flag = false;
@@ -109,6 +110,7 @@ namespace AirPortApp
          }
       }
 
+      // регистрация пассажира
       internal void InsertToPassengers()
       {
          string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LocalDBAirPortApp.mdf;Integrated Security=True";
@@ -296,6 +298,7 @@ namespace AirPortApp
          
       }
 
+      // стоимость всех проданных билетов
       internal void SumAllTickets()
       {
          string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LocalDBAirPortApp.mdf;Integrated Security=True";
@@ -338,6 +341,7 @@ namespace AirPortApp
          }
       }
 
+      // стоимость всех проданных билетов для выбранного пассажира
       internal void SumAllTicketsThisPass()
       {
          string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LocalDBAirPortApp.mdf;Integrated Security=True";
