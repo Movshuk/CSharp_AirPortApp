@@ -95,16 +95,21 @@ namespace AirPortApp
                AirDirection ad3 = new AirDirection();
                ad3 = ad3.FindToChangeDPC(); // заполняю пустой объект данными из базы данных
                // если объект пустой то нельзя изменить запись возврат в меню
-               Thread.Sleep(2000);
+               //Thread.Sleep(2000);
+               
                if (ad3.Direction == null)
                {
+                  Console.WriteLine(">> Нажмите ENTER TO CONTINUE");
+                  Console.ReadLine();
                   SecondMenu();
                   break;
                }
                else
                {
                   ad3.ChangePriceDirection();
-                  Thread.Sleep(2000);
+                  //Thread.Sleep(2000);
+                  Console.WriteLine(">> Нажмите ENTER TO CONTINUE");
+                  Console.ReadLine();
                   SecondMenu();
                   break;
                }
@@ -131,8 +136,9 @@ namespace AirPortApp
 
          Console.WriteLine("[Меню]");
          Console.WriteLine("[0] Регистрация пассажира на рейс");
-         Console.WriteLine("[1] Возврат в Основное меню");
-         Console.WriteLine("[2] ВЫХОД из системы");
+         Console.WriteLine("[1] Показать всех регистировавшихся пассижров");
+         Console.WriteLine("[2] Возврат в Основное меню");
+         Console.WriteLine("[3] ВЫХОД из системы");
 
          // выбор пункта меню
          string chois = Console.ReadLine();
@@ -149,9 +155,17 @@ namespace AirPortApp
                ThirdMenu();
                break;
             case "1":
-               FirstMenu();
+               Passengers p2 = new Passengers();
+               p2.ShowAllPassengers();
+               Console.WriteLine(">> Нажмите ENTER TO CONTINUE");
+               Console.ReadLine();
+               Console.Clear();
+               ThirdMenu();
                break;
             case "2":
+               FirstMenu();
+               break;
+            case "3":
                Console.WriteLine(">> Работа с Системой завершена. Досвидания!");
                break;
             default:

@@ -41,7 +41,7 @@ namespace AirPortApp
             if (reader.HasRows) // если есть данные
             {
                // выводим названия столбцов
-               Console.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", reader.GetName(1), reader.GetName(2), reader.GetName(3), reader.GetName(4), reader.GetName(5));
+               Console.WriteLine("{0, 10}{1, 10}{2, 10}{3, 10}{4, 10}", reader.GetName(1), reader.GetName(2), reader.GetName(3), reader.GetName(4), reader.GetName(5));
                Console.WriteLine("-------------------------------------------");
 
                while (reader.Read()) // построчно считываем данные
@@ -52,7 +52,7 @@ namespace AirPortApp
                   string coll4 = reader.GetString(4);
                   string coll5 = reader.GetString(5);
 
-                  Console.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", coll1, coll2, coll3, coll4, coll5);
+                  Console.WriteLine("{0, 10}{1, 10}{2, 10}{3, 10}{4, 10}", coll1, coll2, coll3, coll4, coll5);
                }
             }
             else
@@ -88,19 +88,25 @@ namespace AirPortApp
 
             SqlDataReader reader = command.ExecuteReader();
 
-            if (reader.HasRows) // если есть данные
+            // если есть данные
+            if (reader.HasRows) 
             {
+               while (reader.Read())
+               {
                   int coll1 = reader.GetInt32(1);
                   if (coll1 > 0)
                   {
-                     reader.Close();
-                     return flag = true;
+                     //reader.Close();
+                     flag = true;
+                     break;
                   }
                   else
                   {
-                     reader.Close();
-                     return flag;
+                     //reader.Close();
+                     break;
                   }
+               }
+               return flag;
             }
             else
             {
@@ -118,8 +124,10 @@ namespace AirPortApp
          Console.WriteLine();
 
          // выбор направления
+         Console.WriteLine("> СПИСОК ДЕЙСТВУЮЩИХ НАПРАВЛЕНИЙ");
          AirDirection ad = new AirDirection();
          ad.ShowAllDiretions();
+
          Console.WriteLine("> Введите номер рейса:");
          int idDir = Convert.ToInt32(Console.ReadLine()); // здесь отловить исключение
          Console.Clear();
@@ -146,6 +154,7 @@ namespace AirPortApp
          Console.WriteLine("> Введите [ПОЛ]:");
          Gender = Console.ReadLine().ToUpper();
 
+         // запрос, существует ли такой пассажир в базе регистрировавшихся пассажиров
          bool flagInsert = false;
          string sqlExp = @"SELECT * FROM TablePassengers 
             WHERE 
@@ -169,16 +178,16 @@ namespace AirPortApp
 
             if (reader.HasRows) // если есть данные
             {
-               Console.WriteLine("> Нужно вводить УНИКАЛЬНЫЕ значения. Такой ПАССАЖИР уже есть!");
+               Console.WriteLine("> Такой ПАССАЖИР уже добавлен в БД регистрации!");
             }
             else
             {
-               flagInsert = true;
+               flagInsert = true; // если пассажир первый раз регистрируется
             }
             reader.Close();
          }
 
-
+         // если пассажир регистрируется первый раз, то добавляю его данные в таблицу Пассажиры
          if (flagInsert)
          {
             string sqlExpression = "INSERT INTO TablePassengers VALUES (@FirstName, @LastName, @IdNumber, @Age, @Gender)";
@@ -198,38 +207,40 @@ namespace AirPortApp
             }
             Console.WriteLine(">> Данные пассажира внесены в БД!");
             Console.WriteLine();
+         }
 
-            // получаем массив данных на рейс
-            ArrayList dpc = new ArrayList();
-            
-            dpc.AddRange(ad.SelectDPC(idDir));
-            //Console.WriteLine("====> {0} {1} {2}", dpc[1], dpc[2], dpc[3]);
+         // получаем массив данных на рейс (цена, класс, направление)
+         ArrayList dpc = new ArrayList();
 
-            // проверка новый или постоянный пассажир для расчета скидки
-            bool flagPas = SelectPass(FirstName, LastName, IdNumber);
-            double discount;
-            double priceDisc;
+         dpc.AddRange(ad.SelectDPC(idDir));
+         //Console.WriteLine("====> {0} {1} {2}", dpc[1], dpc[2], dpc[3]);
 
-            if (flagPas)
+
+         // проверка новый или постоянный пассажир для расчета скидки
+         bool flagPas = SelectPass(FirstName, LastName, IdNumber);
+         double discount;
+         double priceDisc;
+
+         // true = постоянный, false = первый раз
+         if (flagPas)
+         {
+            discount = 0.1; // скидка 10%
+            priceDisc = Math.Round((Convert.ToDouble(dpc[2]) - (Convert.ToDouble(dpc[2]) * discount)),2);
+         }
+         else
+         {
+            priceDisc = Convert.ToDouble(dpc[2]) - 2; // фиксированная скидка -2у.е.
+            if (priceDisc <= 0)
             {
-               discount = 0.1;
-               priceDisc = Convert.ToDouble(dpc[2]) * discount;
+               Console.WriteLine("> Внимание! Цена с учетом скидки не может быть меньше 0! Цена билета принята без скидки!");
+               priceDisc += 2;
+               discount = 0;
             }
             else
             {
-               priceDisc = Convert.ToDouble(dpc[2]) - 2;
-               if (priceDisc <= 0)
-               {
-                  Console.WriteLine("> Внимание! Цена с учетом скидки не может быть меньше 0! Цена билета принята без скидки!");
-                  priceDisc += 2;
-                  discount = 0;
-               }
-               else
-               {
-                  discount = Math.Round(priceDisc / Convert.ToDouble(dpc[2]), 2);
-               }
-
+               discount = Math.Round(2 / Convert.ToDouble(dpc[2]), 2);
             }
+         }
 
             //Console.WriteLine("====//////////////////////////====");
             // оформление билета
@@ -239,31 +250,27 @@ namespace AirPortApp
                VALUES (@Direction, @Name, @LName, @IdNumber, @PriceDirection,
                @Discount, @PriceWithDiscount, @RegDate, @Class)";
 
-               using (SqlConnection connection = new SqlConnection(connectionString))
-               {
-                  connection.Open();
-                  SqlCommand command = new SqlCommand(sqlExpression2, connection);
-                  command.Parameters.AddWithValue("@Direction", dpc[1]);
-                  command.Parameters.AddWithValue("@Name", FirstName);
-                  command.Parameters.AddWithValue("@LName", LastName);
-                  command.Parameters.AddWithValue("@IdNumber", IdNumber);
-                  command.Parameters.AddWithValue("@PriceDirection", dpc[2]);
-                  command.Parameters.AddWithValue("@Discount", discount);
-                  command.Parameters.AddWithValue("@PriceWithDiscount", priceDisc);
-                  command.Parameters.AddWithValue("@RegDate", dateTrip);
-                  command.Parameters.AddWithValue("@Class", dpc[3]);
-               
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+               connection.Open();
+               SqlCommand command = new SqlCommand(sqlExpression2, connection);
+               command.Parameters.AddWithValue("@Direction", dpc[1]);
+               command.Parameters.AddWithValue("@Name", FirstName);
+               command.Parameters.AddWithValue("@LName", LastName);
+               command.Parameters.AddWithValue("@IdNumber", IdNumber);
+               command.Parameters.AddWithValue("@PriceDirection", dpc[2]);
+               command.Parameters.AddWithValue("@Discount", discount);
+               command.Parameters.AddWithValue("@PriceWithDiscount", priceDisc);
+               command.Parameters.AddWithValue("@RegDate", dateTrip);
+               command.Parameters.AddWithValue("@Class", dpc[3]);
+
                command.ExecuteNonQuery();
 
-               }
-               Console.WriteLine(">> Данные добавлены!");
-               Console.WriteLine();
-
             }
+            Console.WriteLine(">> Данные добавлены!");
+            Console.WriteLine();
 
-
-         
-         // =====================
+         // выбираю данные по билетам:
          string sqlExp2 = "SELECT * FROM TableTickets";
 
          using (SqlConnection connection = new SqlConnection(connectionString))
@@ -292,10 +299,20 @@ namespace AirPortApp
             reader.Close();
          }
 
-            // =============================
-           
-         
-         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       }
 
       // стоимость всех проданных билетов
